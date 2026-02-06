@@ -25,13 +25,16 @@ const userSchema = new Schema({
         type: String,
         required: true,
         minLength: 6
-    }
+    },
+    refreshToken: {
+      type: String,
+    },
 }, {timestamps: true})
 
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
     // Password is hashed only when it changes
     if (!this.isModified('password')) {
-        return next();
+        return
     }
     this.password = await bcrypt.hash(this.password, 10);
     

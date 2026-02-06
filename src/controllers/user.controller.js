@@ -6,6 +6,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const generateAccessandRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
@@ -15,10 +18,8 @@ const generateAccessandRefreshToken = async (userId) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
-    throw new ApiError(
-      500,
-      "something went wrong while generating access and refresh token",
-    );
+    console.error("Token generation error:", error);
+    throw new ApiError(500, error.message);
   }
 };
 
@@ -76,21 +77,21 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found");
   }
 
-  const isPasswordValid = await user.isPasswordCorrect(password)
+  const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid password");
   }
 
-  const {accessToken, refreshToken} = await generateAccessandRefreshToken(
-    user._id
-  )
+  const { accessToken, refreshToken } = await generateAccessandRefreshToken(
+    user._id,
+  );
   const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  )
+    "-password -refreshToken",
+  );
   const options = {
     httpOnly: true,
-    secure: true
-  }
+    secure: true,
+  };
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -103,8 +104,8 @@ const loginUser = asyncHandler(async (req, res) => {
           accessToken,
           refreshToken,
         },
-        "user loggedin successfully"
-      )
+        "user loggedin successfully",
+      ),
     );
 });
 
@@ -115,8 +116,8 @@ const logoutUser = asyncHandler(async (req, res) => {
     },
   });
   const options = {
-    httpOnly: true, 
-    secure: true, 
+    httpOnly: true,
+    secure: true,
   };
   return res
     .clearCookie("accessToken", options)
