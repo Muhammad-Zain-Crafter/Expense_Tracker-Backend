@@ -109,6 +109,12 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
+const getProfile = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "User profile fetched successfully"));
+});
+
 const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(req.user._id, {
     $set: {
@@ -124,4 +130,51 @@ const logoutUser = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged out"));
 });
-export { registerUser, loginUser, logoutUser };
+
+const updateProfile = asyncHandler(async (req, res) => {
+  const { username, fullname, email } = req.body;
+  const updateUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        username: username,
+        fullname: fullname,
+        email: email
+      },
+    },
+    { new: true },
+  ).select("-password");
+
+  if (!updateUser) {
+    throw new ApiError(500, "Something went wrong while updating profile");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updateUser, "Profile updated successfully"));
+});
+
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(400, "Old and new passwords are required");
+  }
+  const user = await User.findById(req.user._id);
+  const checkPassword = await user.isPasswordCorrect(oldPassword);
+  if (!checkPassword) {
+    throw new ApiError(401, "Old password is incorrect");
+  }
+  user.password = newPassword;
+  await user.save();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+export {
+  registerUser,
+  loginUser,
+  getProfile,
+  logoutUser,
+  updateProfile,
+  changePassword,
+};

@@ -17,6 +17,11 @@ const expenseSchema = new Schema({
         required: true,  
         default: 0,
     },
+    date: {
+        type: Date,
+        required: true,
+        trim: true
+    },
      category: {
         type: String,
         required: true,

@@ -5,12 +5,15 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { isValidObjectId } from "mongoose";
 
 const addExpense = asyncHandler(async (req, res) => {
-  const { title, amount, category, description } = req.body;
+  const { title, amount, date, category, description } = req.body;
   if (!title) {
     throw new ApiError(400, "title is required");
   }
   if (!amount) {
     throw new ApiError(400, "amount is required");
+  }
+  if (!date) {
+    throw new ApiError(400, "date is required");
   }
   if (amount <= 0 || isNaN(amount)) {
     throw new ApiError(400, "amount must be a positive number");
@@ -21,6 +24,7 @@ const addExpense = asyncHandler(async (req, res) => {
   const expense = await Expense.create({
     title,
     amount,
+    date,
     category,
     description,
     user: req.user._id,
@@ -64,5 +68,35 @@ const deleteExpense = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, expense, "Expense deleted successfully"));   
 }) 
 
-export { addExpense, getExpense, deleteExpense };
-s
+const updateExpense = asyncHandler(async (req, res) => {
+    const {id} = req.params;
+
+    if (!isValidObjectId(id)) {
+        throw new ApiError(400, "Invalid expense id");
+    }
+    const { title, amount, date, category, description } = req.body;
+    if (amount && (amount <= 0 || isNaN(amount))) {
+        throw new ApiError(400, "amount must be a positive number");
+    }
+    const updateExpense = await Expense.findOneAndUpdate(
+      {_id: id, user: req.user._id},
+      {
+        $set: {
+          title: title,
+          amount: amount,
+          date: date,
+          category: category,
+          description: description
+        }
+      },
+      {new: true}
+    )
+    if (!updateExpense) {
+        throw new ApiError(404, "Expense not found");
+    }
+    return res
+        .status(200)
+        .json(new ApiResponse(200, updateExpense, "Expense updated successfully"));
+})
+
+export { addExpense, getExpense, updateExpense,deleteExpense };
