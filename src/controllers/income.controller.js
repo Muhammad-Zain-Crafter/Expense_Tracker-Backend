@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import Income from "../models/income.model.js";
+import { Income } from "../models/income.model.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
