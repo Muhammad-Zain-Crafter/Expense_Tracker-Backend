@@ -18,7 +18,7 @@ app.use(cors({
 app.use(cookieParser()); // for parsing cookies
 
 app.get('/', (req, res) => {
-    res.send("Welcome to Expense Tracker API")
+    res.send('Welcome to the Expense Tracker API');
 })
 
 import userRouter from './routes/user.route.js';

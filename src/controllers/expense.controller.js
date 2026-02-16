@@ -4,9 +4,10 @@ import { Expense } from "../models/expense.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { isValidObjectId } from "mongoose";
 import { Budget } from "../models/budget.model.js";
+import { categorizeExpense } from "../utils/aiCategorizer.js";
 
 const addExpense = asyncHandler(async (req, res) => {
-  const { title, amount, date, category, description } = req.body;
+  let { title, amount, date, category, description } = req.body;
   if (!title) {
     throw new ApiError(400, "title is required");
   }
@@ -20,7 +21,7 @@ const addExpense = asyncHandler(async (req, res) => {
     throw new ApiError(400, "amount must be a positive number");
   }
   if (!category) {
-    throw new ApiError(400, "category is required");
+    category = await categorizeExpense(title, description)
   }
 
   const expenseMonth = new Date(date).getMonth() + 1; // getMonth() returns 0-11, we add 1 to make it 1-12
